@@ -14,14 +14,15 @@
 # limitations under the License.
 
 import re
-import torch
-from typing import Tuple
 from pathlib import Path
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from typing import Tuple
 
-from sparktts.utils.file import load_config
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 from sparktts.models.audio_tokenizer import BiCodecTokenizer
-from sparktts.utils.token_parser import LEVELS_MAP, GENDER_MAP, TASK_TOKEN_MAP
+from sparktts.utils.file import load_config
+from sparktts.utils.token_parser import GENDER_MAP, LEVELS_MAP, TASK_TOKEN_MAP
 
 
 class SparkTTS:
@@ -158,11 +159,11 @@ class SparkTTS:
     def inference(
         self,
         text: str,
-        prompt_speech_path: Path = None,
-        prompt_text: str = None,
-        gender: str = None,
-        pitch: str = None,
-        speed: str = None,
+        prompt_speech_path: Path | None = None,
+        prompt_text: str | None = None,
+        gender: str | None = None,
+        pitch: str | None = None,
+        speed: str | None = None,
         temperature: float = 0.8,
         top_k: float = 50,
         top_p: float = 0.95,
@@ -210,18 +211,30 @@ class SparkTTS:
         ]
 
         # Decode the generated tokens into text
-        predicts = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        predicts = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[
+            0
+        ]
 
         # Extract semantic token IDs from the generated text
         pred_semantic_ids = (
-            torch.tensor([int(token) for token in re.findall(r"bicodec_semantic_(\d+)", predicts)])
+            torch.tensor(
+                [
+                    int(token)
+                    for token in re.findall(r"bicodec_semantic_(\d+)", predicts)
+                ]
+            )
             .long()
             .unsqueeze(0)
         )
 
         if gender is not None:
             global_token_ids = (
-                torch.tensor([int(token) for token in re.findall(r"bicodec_global_(\d+)", predicts)])
+                torch.tensor(
+                    [
+                        int(token)
+                        for token in re.findall(r"bicodec_global_(\d+)", predicts)
+                    ]
+                )
                 .long()
                 .unsqueeze(0)
                 .unsqueeze(0)
