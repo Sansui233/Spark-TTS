@@ -26,17 +26,17 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime
+from functools import wraps
 from pathlib import Path
-from time import time
 from typing import Optional
 
 import soundfile as sf
 import torch
-from fastapi import Body, FastAPI, File, Form, HTTPException, Response, UploadFile
-from fastapi.responses import FileResponse
+from fastapi import Body, FastAPI, HTTPException, Response
 
 from cli.SparkTTS import SparkTTS
 from sparktts.utils.token_parser import LEVELS_MAP_UI
+from tools.time import timer
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -80,6 +80,7 @@ app = FastAPI(
 )
 
 
+@timer
 def initialize_model(model_dir="pretrained_models/Spark-TTS-0.5B", device=0):
     """Load the model once at the beginning."""
     logging.info(f"Loading model from: {model_dir}")
@@ -88,6 +89,7 @@ def initialize_model(model_dir="pretrained_models/Spark-TTS-0.5B", device=0):
     return model
 
 
+@timer
 def run_tts(
     text: str,
     model: SparkTTS,
